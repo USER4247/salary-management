@@ -52,7 +52,25 @@ git clone https://github.com/USER4247/salary-management.git
 cd salary-management
 ```
 
-### 3. Start everything, with demo data (one command)
+### 3. Install everything (once)
+
+```bash
+npm run setup
+```
+
+This checks the tools from step 1 (with a plain message and a fix if one is missing), then installs what the project
+needs. Nothing has to be installed by hand:
+
+| Part | What gets installed, and how |
+|---|---|
+| Backend (Java + Spring Boot) | The Maven wrapper (`backend/mvnw`) downloads Maven itself, then Maven downloads every library listed in `backend/pom.xml`. `setup` does this by building the backend once (tests skipped). |
+| Frontend (Angular) | `npm ci` installs exactly the packages recorded in `frontend/package-lock.json` into `frontend/node_modules` |
+| Root scripts | no packages |
+
+The first run takes a few minutes (downloads); later runs are quick. This step is optional, because `npm run dev:local`
+also installs the frontend packages when they are missing, but it makes the first start fast and shows any problem early.
+
+### 4. Start everything, with demo data (one command)
 
 ```bash
 npm run dev:local:seed
@@ -65,11 +83,11 @@ The first run takes a few minutes (it downloads Maven and the npm packages). It 
 
 and loads the 10,000 demo employees if the database is empty. Press `Ctrl+C` to stop both.
 
-### 4. Sign in
+### 5. Sign in
 
 Open http://localhost:4200 and use a demo account (below). Click a name on the sign-in page to fill it in.
 
-### 5. Run the tests (optional)
+### 6. Run the tests (optional)
 
 ```bash
 npm test
@@ -81,6 +99,7 @@ All commands run from the repository root.
 
 | Command | What it does |
 |---|---|
+| `npm run setup` | One-time setup: checks Java and Node, installs the Angular packages, downloads Maven and the Spring libraries by building the backend once |
 | `npm run dev:local` | Starts backend and frontend together, **without** loading demo data (use it when you already have data) |
 | `npm run dev:local:seed` | Same, and loads the 10,000 demo employees **if the employees table is empty** |
 | `npm run db:seed` | Fills the database file directly with the demo employees (needs the backend to have started once, so the tables exist). Safe while the backend runs. |
@@ -136,6 +155,7 @@ The defaults are right for local use. The full list is in [`.env.example`](.env.
 
 | Problem | Fix |
 |---|---|
+| `npm run setup` reports a tool as MISSING | Install what it names (JDK 21+, Node 22.22.3+) and run it again; it prints the fix next to each tool |
 | `The Angular CLI requires a minimum Node.js version` | Use Node 22.22.3+ (see the note under Prerequisites) |
 | Port 8080 or 4200 already in use | Stop the other program; these ports are fixed in `dev:local` |
 | `npm run db:seed` says the database or the table does not exist | Start the backend once (`npm run dev:local`), then run it again |

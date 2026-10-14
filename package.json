@@ -3,6 +3,7 @@
   "private": true,
   "description": "Developer shortcuts for the salary-management monorepo",
   "scripts": {
+    "setup": "node scripts/setup.js",
     "dev:local": "node scripts/dev-local.js",
     "dev:local:seed": "node scripts/dev-local.js --seed",
     "db:seed": "node scripts/run-node22.js scripts/seed-employees.js",
