@@ -10,20 +10,40 @@ how the organization pays people.
 |---|---|
 | Backend | Java 21, Spring Boot 3 |
 | Database | SQLite (see [ADR-0003](docs/adr/0003-sqlite-database.md)), Flyway migrations |
-| UI | Angular, TypeScript |
+| UI | Angular 22, TypeScript, SCSS |
 | Tests | JUnit 5, AssertJ, Mockito |
 
 ## Getting started
 
-_Coming soon._
+Prerequisites: JDK 21+ and Node 22.22.3+ (no database server or Docker needed; SQLite is embedded).
+
+```bash
+# backend: http://localhost:8080 (health: /actuator/health)
+cd backend && ./mvnw spring-boot:run
+
+# frontend: http://localhost:4200 (proxies /api to the backend)
+cd frontend && npm ci && npm start
+```
+
+Tests:
+
+```bash
+cd backend && ./mvnw verify
+cd frontend && npm test -- --watch=false
+```
+
+Configuration is read from environment variables (see [`.env.example`](.env.example) and
+[ADR-0002](docs/adr/0002-configuration-and-secrets.md)).
 
 ## Architecture
 
 _Coming soon._ Decisions are recorded in [`docs/adr`](docs/adr).
 
-## Testing
+## Repository layout
 
-_Coming soon._
+- `backend/` Spring Boot service
+- `frontend/` Angular app
+- `docs/` requirements, ADRs and AI-workflow notes
 
 ## Deployment
 
