@@ -6,7 +6,7 @@ CREATE TABLE users (
     role          TEXT    NOT NULL CHECK (role IN ('HR_ADMIN', 'HR_VIEWER', 'COUNTRY_HR')),
     country_scope TEXT,
     enabled       INTEGER NOT NULL DEFAULT 1,
-    created_at    TEXT    NOT NULL,
+    created_at    TIMESTAMP    NOT NULL,
     CHECK (role <> 'COUNTRY_HR' OR country_scope IS NOT NULL)
 );
 
@@ -17,10 +17,10 @@ CREATE TABLE refresh_tokens (
     user_id     INTEGER NOT NULL REFERENCES users (id),
     family_id   TEXT    NOT NULL,
     token_hash  TEXT    NOT NULL UNIQUE,
-    expires_at  TEXT    NOT NULL,
-    used_at     TEXT,
-    revoked_at  TEXT,
-    created_at  TEXT    NOT NULL
+    expires_at  TIMESTAMP    NOT NULL,
+    used_at     TIMESTAMP,
+    revoked_at  TIMESTAMP,
+    created_at  TIMESTAMP    NOT NULL
 );
 
 CREATE INDEX idx_refresh_tokens_family ON refresh_tokens (family_id);

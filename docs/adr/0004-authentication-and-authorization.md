@@ -40,6 +40,12 @@ refresh and retries, a proactive refresh timer driven by the `expiresAt` returne
 bodies (the HttpOnly token cannot be read), sign-out that revokes server-side and clears
 state, and cross-tab sign-out through `BroadcastChannel`.
 
+**Why not `oauth2ResourceServer()`:** Spring's resource-server DSL exempts every request that carries a bearer
+token from CSRF checks, which is right for an `Authorization` header but would silently disable CSRF protection when
+the token is a cookie the browser attaches by itself. An integration test (a cookie-authenticated POST without a CSRF
+token returned 200) caught this. The JWT is therefore validated by an explicit `AuthenticationFilter` with
+`JwtAuthenticationProvider`, which has no such override.
+
 ## Consequences
 - Tokens are never reachable from JavaScript, limiting XSS impact.
 - Same-origin hosting is required; deployment must keep the UI and API on one host.

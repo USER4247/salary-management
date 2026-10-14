@@ -45,7 +45,13 @@ if (!fs.existsSync(path.join(frontendDir, 'node_modules'))) {
 }
 
 const wrapper = path.join(backendDir, isWin ? 'mvnw.cmd' : 'mvnw');
-const backend = run('backend', `"${wrapper}"`, ['spring-boot:run'], backendDir);
+// Dev-only defaults so a fresh checkout runs. The secret is random per start, so sessions end on restart.
+const backendEnv = {
+  ...process.env,
+  JWT_SECRET: process.env.JWT_SECRET || require('node:crypto').randomBytes(48).toString('hex'),
+  AUTH_COOKIE_SECURE: process.env.AUTH_COOKIE_SECURE || 'false',
+};
+const backend = run('backend', `"${wrapper}"`, ['spring-boot:run'], backendDir, backendEnv);
 const frontend = run('frontend', 'npm', ['start'], frontendDir, frontendEnv());
 const children = [backend, frontend];
 

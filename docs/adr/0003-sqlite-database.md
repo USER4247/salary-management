@@ -14,6 +14,9 @@ Use SQLite (`sqlite-jdbc` + Hibernate community SQLite dialect) with Flyway migr
   per group) or a small in-service calculation.
 - Hosting free tiers have ephemeral disks: the database is seeded on startup when empty
   (10,000 rows take seconds with batched inserts).
+- Hibernate schema validation is off (`ddl-auto: none`): SQLite's dynamic typing (`INTEGER` ids, `TIMESTAMP` and
+  `INTEGER` booleans) never matches Hibernate's expected column types. Flyway owns the schema and integration tests
+  exercise every mapping instead.
 - SQL stays standard and data access goes through JPA to keep a Postgres migration cheap.
 
 ## Consequences
