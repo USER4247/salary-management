@@ -2,7 +2,7 @@ spring:
   application:
     name: salary-management
   datasource:
-    url: ${DB_URL:jdbc:sqlite:./data/salary.db?journal_mode=WAL&busy_timeout=5000}
+    url: ${DB_URL:jdbc:sqlite:./salary.db?journal_mode=WAL&busy_timeout=5000}
     driver-class-name: org.sqlite.JDBC
     hikari:
       maximum-pool-size: 1   # SQLite allows a single writer; see ADR-0003
