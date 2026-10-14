@@ -37,3 +37,7 @@ data/
 *.db
 *.db-shm
 *.db-wal
+
+# Built UI copied in by the Docker build (not committed)
+backend/src/main/resources/static/*
+!backend/src/main/resources/static/.gitkeep
