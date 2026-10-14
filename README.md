@@ -9,7 +9,7 @@ how the organization pays people.
 | Layer | Choice |
 |---|---|
 | Backend | Java 21, Spring Boot 3 |
-| Database | PostgreSQL, Flyway migrations |
+| Database | SQLite (see [ADR-0003](docs/adr/0003-sqlite-database.md)), Flyway migrations |
 | UI | Angular, TypeScript |
 | Tests | JUnit 5, AssertJ, Mockito |
 
