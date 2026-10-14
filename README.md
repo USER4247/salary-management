@@ -10,20 +10,45 @@ how the organization pays people.
 |---|---|
 | Backend | Java 21, Spring Boot 3 |
 | Database | SQLite (see [ADR-0003](docs/adr/0003-sqlite-database.md)), Flyway migrations |
-| UI | Angular, TypeScript |
+| UI | Angular 22, TypeScript, SCSS |
 | Tests | JUnit 5, AssertJ, Mockito |
 
 ## Getting started
 
-_Coming soon._
+Prerequisites: JDK 21+ and Node 22.22.3+ (no database server or Docker needed; SQLite is embedded).
+
+```bash
+npm run dev:local
+```
+
+This starts the backend (http://localhost:8080/actuator/health) and the frontend
+(http://localhost:4200, proxying `/api` to the backend) together; Ctrl+C stops both.
+If your default Node is older than 22.22.3, copy `.env.example` to `.env.local` and set
+`NODE22_HOME` to a newer Node folder (gitignored, used for frontend processes only).
+
+Run them separately with `cd backend && ./mvnw spring-boot:run` and
+`cd frontend && npm start`.
+
+Tests:
+
+```bash
+npm test            # backend + frontend
+npm run test:backend
+npm run test:frontend
+```
+
+Configuration is read from environment variables (see [`.env.example`](.env.example) and
+[ADR-0002](docs/adr/0002-configuration-and-secrets.md)).
 
 ## Architecture
 
 _Coming soon._ Decisions are recorded in [`docs/adr`](docs/adr).
 
-## Testing
+## Repository layout
 
-_Coming soon._
+- `backend/` Spring Boot service
+- `frontend/` Angular app
+- `docs/` requirements, ADRs and AI-workflow notes
 
 ## Deployment
 

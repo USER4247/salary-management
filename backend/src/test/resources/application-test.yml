@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    url: jdbc:sqlite:file:salary-test?mode=memory&cache=shared
+    hikari:
+      maximum-pool-size: 1
+      max-lifetime: 0
