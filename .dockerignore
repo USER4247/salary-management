@@ -1,0 +1,10 @@
+**/node_modules
+**/.angular
+frontend/dist
+backend/target
+backend/*.db*
+backend/data
+.git
+.env
+.env.*
+docs

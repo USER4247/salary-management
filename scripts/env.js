@@ -29,4 +29,11 @@ function frontendEnv() {
   return env;
 }
 
-module.exports = { root, frontendEnv };
+/** The Node program to use for scripts that need Node 22+ (NODE22_HOME if set, otherwise the current Node). */
+function node22Binary() {
+  const home = process.env.NODE22_HOME || loadLocalEnv().NODE22_HOME;
+  if (!home) return process.execPath;
+  return path.join(home, process.platform === 'win32' ? 'node.exe' : path.join('bin', 'node'));
+}
+
+module.exports = { root, frontendEnv, node22Binary };

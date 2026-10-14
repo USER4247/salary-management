@@ -1,19 +1,37 @@
 spring:
   application:
     name: salary-management
-  datasource:
-    url: ${DB_URL:jdbc:sqlite:./salary.db?journal_mode=WAL&busy_timeout=5000}
-    driver-class-name: org.sqlite.JDBC
-    hikari:
-      maximum-pool-size: 1   # SQLite allows a single writer; see ADR-0003
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate     # schema is owned by Flyway migrations
+      ddl-auto: none         # schema is owned by Flyway; Hibernate validation is unreliable on SQLite (ADR-0003)
     database-platform: org.hibernate.community.dialect.SQLiteDialect
+
+server:
+  port: ${PORT:8080}                     # hosting platforms tell the app which port to use
+  forward-headers-strategy: framework    # behind the platform's HTTPS proxy: trust X-Forwarded-* (real client IP and scheme)
+  compression:
+    enabled: true
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+
+app:
+  db:
+    url: ${DB_URL:jdbc:sqlite:./salary.db}          # a plain SQLite file; WAL mode and pools are set in code
+    reader-pool-size: ${DB_READER_POOL_SIZE:4}      # read-only connections (reads never wait for writes)
+    busy-timeout: ${DB_BUSY_TIMEOUT:5s}             # how long to wait if another process holds the write lock
+  auth:
+    jwt-secret: ${JWT_SECRET}               # required, at least 32 characters; never committed (ADR-0002)
+    access-ttl: ${ACCESS_TOKEN_TTL:15m}     # how long one access token lives
+    refresh-ttl: ${REFRESH_TOKEN_TTL:7d}    # how long you stay signed in without typing the password
+    cookie-secure: ${AUTH_COOKIE_SECURE:true}   # true = cookies only over HTTPS (dev script turns it off)
+  rate-limit:
+    requests-per-minute: ${RATE_LIMIT_PER_MINUTE:300}   # per IP, all /api calls
+    login-per-minute: ${RATE_LIMIT_LOGIN_PER_MINUTE:10} # per IP, login attempts (password guessing)
+  seed:
+    demo-users: ${SEED_DEMO_USERS:true}     # assessment build only; see DemoUserSeeder
+    employees: ${SEED_EMPLOYEES:false}      # load 10,000 demo employees when the database is empty (on in the Docker image)

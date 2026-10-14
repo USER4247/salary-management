@@ -1,0 +1,17 @@
+# Deploys the app on Render (https://render.com): New > Blueprint > pick this repository.
+# Render builds the Dockerfile, gives the service an HTTPS address, and fills in JWT_SECRET with a random value.
+# On the free plan the disk is not kept between deploys: the demo users and 10,000 employees are recreated at
+# every start, and any edits made in the app are lost then. Add a persistent disk mounted at /data to keep them.
+services:
+  - type: web
+    name: salary-management
+    runtime: docker
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SEED_DEMO_USERS
+        value: "true"
+      - key: SEED_EMPLOYEES
+        value: "true"
