@@ -135,10 +135,31 @@ class EmployeeApiTest {
     }
 
     @Test
-    void sortsByNameWhenNothingElseIsAsked() throws Exception {
+    void showsTheNewestEmployeeFirstWhenNothingElseIsAsked() throws Exception {
+        // the six were saved in this order: Asha, Ravi, Meera, John, Jane, Lukas
         mvc.perform(get("/api/employees").cookie(signedInAs("manager@acme.test")))
+                .andExpect(jsonPath("$.content[0].fullName").value("Lukas Weber"))
+                .andExpect(jsonPath("$.content[5].fullName").value("Asha Rao"));
+    }
+
+    @Test
+    void anEmployeeAddedNowAppearsAtTheTopOfTheDefaultList() throws Exception {
+        employees.save(employee("Zed Newest", "zed@acme.test", "US", "Finance", "Accountant", 80_000, "USD", "ACTIVE"));
+
+        mvc.perform(get("/api/employees").cookie(signedInAs("manager@acme.test")))
+                .andExpect(jsonPath("$.content[0].fullName").value("Zed Newest"));
+    }
+
+    @Test
+    void canStillSortByNameOrByOldestFirst() throws Exception {
+        Cookie manager = signedInAs("manager@acme.test");
+
+        mvc.perform(get("/api/employees").param("sort", "fullName,asc").cookie(manager))
                 .andExpect(jsonPath("$.content[0].fullName").value("Asha Rao"))
                 .andExpect(jsonPath("$.content[5].fullName").value("Ravi Iyer"));
+        mvc.perform(get("/api/employees").param("sort", "id,asc").cookie(manager))
+                .andExpect(jsonPath("$.content[0].fullName").value("Asha Rao"))
+                .andExpect(jsonPath("$.content[5].fullName").value("Lukas Weber"));
     }
 
     @Test

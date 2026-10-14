@@ -99,6 +99,10 @@ import { Employee, EmployeePage, EmployeeQuery, EmployeeService } from './employ
         <div class="table-wrap">
           <table mat-table [dataSource]="rows()" matSort [matSortActive]="query().sort" [matSortDirection]="query().direction"
                  (matSortChange)="changeSort($event)">
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+              <td mat-cell *matCellDef="let e" class="id">{{ e.id }}</td>
+            </ng-container>
             <ng-container matColumnDef="fullName">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
               <td mat-cell *matCellDef="let e">{{ e.fullName }}<div class="sub">{{ e.email }}</div></td>
@@ -162,6 +166,7 @@ import { Employee, EmployeePage, EmployeeQuery, EmployeeService } from './employ
     .table-wrap { overflow-x: auto; }
     table { width: 100%; }
     .number { text-align: right; }
+    .id { color: var(--mat-sys-on-surface-variant); }
     .sub { font: var(--mat-sys-body-small); color: var(--mat-sys-on-surface-variant); }
     .error { color: var(--mat-sys-error); }
     .empty { padding: 24px; text-align: center; color: var(--mat-sys-on-surface-variant); }
@@ -179,11 +184,12 @@ export class EmployeeList {
   protected readonly countries = COUNTRIES;
   protected readonly departments = DEPARTMENTS;
   protected readonly statuses = STATUSES;
-  protected readonly columns = ['fullName', 'country', 'department', 'jobTitle', 'annualSalary', 'hireDate', 'status', 'actions'];
+  protected readonly columns = ['id', 'fullName', 'country', 'department', 'jobTitle', 'annualSalary', 'hireDate', 'status', 'actions'];
 
   protected readonly searchControl = new FormControl('', { nonNullable: true });
   protected readonly query = signal<EmployeeQuery>({
-    page: 0, size: 25, sort: 'fullName', direction: 'asc', search: '', country: '', department: '', status: '',
+    // Newest first: the highest ID is the most recently added employee.
+    page: 0, size: 25, sort: 'id', direction: 'desc', search: '', country: '', department: '', status: '',
   });
   protected readonly page = signal<EmployeePage | null>(null);
   protected readonly rows = signal<Employee[]>([]);
@@ -231,7 +237,7 @@ export class EmployeeList {
     // A third click on a column clears the sort (direction ''); fall back to the default order.
     this.update(sort.direction
       ? { sort: sort.active, direction: sort.direction, page: 0 }
-      : { sort: 'fullName', direction: 'asc', page: 0 });
+      : { sort: 'id', direction: 'desc', page: 0 });
   }
 
   protected changePage(event: PageEvent): void {
@@ -243,11 +249,13 @@ export class EmployeeList {
   }
 
   protected add(): void {
-    this.openForm({ limitedToCountry: this.limitedTo() }, 'Employee added');
+    // After adding, go back to the first page with the newest first, so the new person is right at the top.
+    this.openForm({ limitedToCountry: this.limitedTo() }, 'Employee added',
+      () => this.update({ page: 0, sort: 'id', direction: 'desc' }));
   }
 
   protected edit(employee: Employee): void {
-    this.openForm({ employee, limitedToCountry: this.limitedTo() }, 'Employee updated');
+    this.openForm({ employee, limitedToCountry: this.limitedTo() }, 'Employee updated', () => this.reload());
   }
 
   /** Asks first, then deletes on the server and refreshes the list. */
@@ -263,11 +271,12 @@ export class EmployeeList {
     });
   }
 
-  private openForm(data: { employee?: Employee; limitedToCountry: string | null }, successMessage: string): void {
+  private openForm(data: { employee?: Employee; limitedToCountry: string | null }, successMessage: string,
+                   afterSaving: () => void): void {
     this.dialog.open(EmployeeForm, { data, autoFocus: 'first-tabbable' }).afterClosed().subscribe((saved) => {
       if (saved) {   // closed with a saved employee (not cancelled)
         this.snackBar.open(successMessage, 'OK', { duration: 3000 });
-        this.reload();
+        afterSaving();
       }
     });
   }

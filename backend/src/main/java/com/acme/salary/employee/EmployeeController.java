@@ -45,7 +45,7 @@ class EmployeeController {
     private static final int MAX_PAGE_SIZE = 100;
     /** Only these columns may be sorted on. Never pass the sort text straight to the database layer. */
     private static final Set<String> SORTABLE = Set.of(
-            "fullName", "email", "country", "department", "jobTitle", "annualSalary", "hireDate", "status");
+            "id", "fullName", "email", "country", "department", "jobTitle", "annualSalary", "hireDate", "status");
     private static final Set<String> STATUSES = Set.of("ACTIVE", "ON_LEAVE", "TERMINATED");
 
     record EmployeeView(Long id, String fullName, String email, String country, String department, String jobTitle,
@@ -91,7 +91,7 @@ class EmployeeController {
     PageResponse<EmployeeView> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size,
-            @RequestParam(defaultValue = "fullName,asc") String sort,
+            @RequestParam(defaultValue = "id,desc") String sort,   // newest first: the highest id is the most recently added
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String country,
             @RequestParam(required = false) String department,
@@ -145,6 +145,8 @@ class EmployeeController {
         }
         Sort.Direction direction = parts.length > 1 && "desc".equalsIgnoreCase(parts[1].trim())
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
-        return Sort.by(direction, field).and(Sort.by("id"));
+        Sort requested = Sort.by(direction, field);
+        // Sorting by id already gives a unique order; for any other column add id as the tie-breaker.
+        return "id".equals(field) ? requested : requested.and(Sort.by("id"));
     }
 }
