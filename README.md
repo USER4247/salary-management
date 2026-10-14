@@ -1,90 +1,116 @@
 # salary-management
 
-Web-based salary management for an organization of 10,000 employees across multiple
-countries. Built for HR managers to maintain salary data and answer questions about
-how the organization pays people.
+Web software for an HR team to manage the pay of 10,000 employees across 10 countries and to answer
+"how do we pay people?" without Excel.
+
+## What it does
+
+- **Employees:** search, filter, sort and page through 10,000 people; add, edit and delete them.
+- **Pay insights:** headcount, total, average, median, lowest and highest pay by country, department or job title,
+  all compared in US dollars at fixed, documented exchange rates.
+- **Sign-in and roles:** four roles, from "can do everything" down to "can only see and change one country".
+  The server enforces every rule; the screens only hide what you cannot use.
+- **Safe by default:** HttpOnly cookie sessions with automatic refresh, CSRF protection, per-IP rate limiting.
+
+| Role | Employees | Insights |
+|---|---|---|
+| `SUPERADMIN` | everything | everything |
+| `HR_MANAGER` | all countries: view, add, edit, delete | read |
+| `HR_VIEWER` | all countries: read-only | read |
+| `COUNTRY_HR` (regional officer) | their own country: view, add, edit | their own country |
 
 ## Stack
 
 | Layer | Choice |
 |---|---|
-| Backend | Java 21, Spring Boot 3 |
-| Database | SQLite (see [ADR-0003](docs/adr/0003-sqlite-database.md)), Flyway migrations |
-| UI | Angular 22, TypeScript, SCSS |
-| Tests | JUnit 5, AssertJ, Mockito |
+| Backend | Java 21, Spring Boot 4, Spring Security, Spring Data JPA |
+| Database | SQLite in WAL mode ([ADR-0003](docs/adr/0003-sqlite-database.md), [ADR-0005](docs/adr/0005-sqlite-access-wal-and-pools.md)), Flyway migrations |
+| UI | Angular 22, Angular Material, CASL (permissions) |
+| Tests | JUnit 5, AssertJ, Mockito, Spring MockMvc / Vitest, Angular TestBed |
 
-## Getting started
+## Run it
 
-Prerequisites: JDK 21+ and Node 22.22.3+ (no database server or Docker needed; SQLite is embedded).
-
-```bash
-npm run dev:local
-```
-
-This starts the backend (http://localhost:8080/actuator/health) and the frontend
-(http://localhost:4200, proxying `/api` to the backend) together; Ctrl+C stops both.
-If your default Node is older than 22.22.3, copy `.env.example` to `.env.local` and set
-`NODE22_HOME` to a newer Node folder (gitignored, used for frontend processes only).
-
-Run them separately with `cd backend && ./mvnw spring-boot:run` and
-`cd frontend && npm start`.
-
-Tests:
+Prerequisites: JDK 21+ and Node 22.22.3+. No database server and no Docker needed.
 
 ```bash
-npm test            # backend + frontend
-npm run test:backend
-npm run test:frontend
+npm run dev:local     # backend on :8080 and frontend on :4200 together (Ctrl+C stops both)
+npm run db:seed       # 10,000 realistic employees (run once, after the first start)
+npm test              # all backend and frontend tests
 ```
 
-## Sample data
+Then open http://localhost:4200 and sign in. If your default Node is older than 22.22.3, copy `.env.example` to
+`.env.local` and set `NODE22_HOME` to a newer Node folder (gitignored).
 
-Start the app once (`npm run dev:local`) so the tables exist, then:
+### Demo accounts
+
+Password for all of them: `Demo@12345` (assessment build only; turn off with `SEED_DEMO_USERS=false`).
+
+| Account | Role |
+|---|---|
+| `superadmin@acme.test` | SUPERADMIN |
+| `manager@acme.test` | HR_MANAGER |
+| `viewer@acme.test` | HR_VIEWER |
+| `hr.<country>@acme.test`, e.g. `hr.in@acme.test` | COUNTRY_HR for US, IN, GB, DE, CA, FR, AU, JP, SG or BR |
+
+The sign-in page fills these in with a click.
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    Browser["Angular app<br/>(Material, CASL)"] -- "HttpOnly cookies + CSRF header" --> Filters
+    subgraph Spring["Spring Boot (one process, one address)"]
+        Filters["Request log -> Rate limit -> CSRF -> JWT check"] --> Guards["@RequireRole / @CheckAbility"]
+        Guards --> Controllers["Auth, Employees, Insights"]
+        Controllers --> Services["Services (country limits from the user's ability)"]
+        Services --> Router{"readOnly?"}
+    end
+    Router -- "reads" --> Readers[("4 read-only connections")]
+    Router -- "writes" --> Writer[("1 writer connection")]
+    Readers --> DB[("SQLite file, WAL mode")]
+    Writer --> DB
+```
+
+- **One address for page and API.** When deployed, Spring serves the built Angular files, which the cookie and
+  CSRF design relies on ([ADR-0004](docs/adr/0004-authentication-and-authorization.md),
+  [ADR-0006](docs/adr/0006-deployment.md)).
+- **Permissions in one place.** `Ability.forRole` defines what each role may do in CASL's model; the same rules are
+  sent to the UI. A regional officer's country limit is applied inside the database query, so other countries'
+  data is never loaded.
+- **Reads never wait for writes.** Details in [ADR-0005](docs/adr/0005-sqlite-access-wal-and-pools.md).
+
+## Deploy
+
+The `Dockerfile` builds both apps into one image; `render.yaml` describes the service for Render.
+Full steps, settings and the honest caveats are in [ADR-0006](docs/adr/0006-deployment.md).
 
 ```bash
-npm run db:seed              # 10,000 realistic employees, the same every time (takes about a second)
-npm run db:seed -- --reset   # replace existing employees
-npm run db:seed -- --count 500 --db path/to/other.db
+docker build -t salary-management .
+docker run -p 8080:8080 -e JWT_SECRET="at-least-32-random-characters-here" -e AUTH_COOKIE_SECURE=false salary-management
 ```
 
-It is safe to run while the backend is running (WAL mode, see [ADR-0005](docs/adr/0005-sqlite-access-wal-and-pools.md)).
-It needs Node 22+ (set `NODE22_HOME` in `.env.local` if your default Node is older).
+## Documentation
 
-## Demo accounts
-
-The password for all of them is `Demo@12345` (assessment build only; turn off with `SEED_DEMO_USERS=false`).
-
-| Account | Role | What it sees |
-|---|---|---|
-| `superadmin@acme.test` | SUPERADMIN | everything, any action |
-| `manager@acme.test` | HR_MANAGER | all employees, full control; reads insights |
-| `viewer@acme.test` | HR_VIEWER | all employees, read-only |
-| `hr.<country>@acme.test`, e.g. `hr.in@acme.test` | COUNTRY_HR | only employees of that country (US, IN, GB, DE, CA, FR, AU, JP, SG, BR) |
-
-The sign-in page has buttons and a country picker that fill these in.
-
-Configuration is read from environment variables (see [`.env.example`](.env.example) and
-[ADR-0002](docs/adr/0002-configuration-and-secrets.md)).
-
-## Architecture
-
-_Coming soon._ Decisions are recorded in [`docs/adr`](docs/adr).
+| | |
+|---|---|
+| [Requirements](docs/requirements/requirements.md) | goal, scope, what was left out and why |
+| [Decisions (ADRs)](docs/adr) | branching, secrets, SQLite, auth, database access, deployment |
+| [Tradeoffs](docs/tradeoffs.md) | the choices that could reasonably have gone the other way |
+| [Performance](docs/performance.md) | measured response times on 10,000 rows |
+| [How AI was used](docs/ai/workflow.md) | workflow, prompts, and where the human changed direction |
+| [Demo script](docs/demo-script.md) | a 5-minute walkthrough for the video |
 
 ## Repository layout
 
-- `backend/` Spring Boot service
+- `backend/` Spring Boot service (`auth`, `employee`, `insights`, `db`, `common` packages)
 - `frontend/` Angular app
-- `docs/` requirements, ADRs and AI-workflow notes
-
-## Deployment
-
-_Coming soon._
+- `scripts/` developer tools: `dev-local`, `seed-employees`
+- `docs/` requirements, ADRs and the notes above
 
 ## Workflow
 
-- Trunk-based: short-lived branches named `type/short-description`, merged to `main` via PR
-  using merge commits ([ADR-0001](docs/adr/0001-trunk-based-development.md)).
-- Commits follow [Conventional Commits](https://www.conventionalcommits.org/)
-  (`feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`).
-- Work is test-first where practical: failing test, implementation, refactor, as separate small commits.
+- Trunk-based: short-lived branches named `type/short-description`, merged to `main` via PR using merge commits
+  ([ADR-0001](docs/adr/0001-trunk-based-development.md)).
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org/); each feature carries its own tests, and
+  CI runs the backend and frontend suites on every PR.
 - Secrets are never committed ([ADR-0002](docs/adr/0002-configuration-and-secrets.md)).

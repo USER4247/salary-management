@@ -60,3 +60,17 @@ needs answers without building pivot tables.
 1. Is "AngularJS for Java" meant as modern Angular (v17+)?
 2. Is cross-country comparison via a fixed rate table acceptable, or should local currency only be shown?
 3. Authentication and roles are included in v1 as a deliberate extension (ADR-0004); is that welcome, or would they prefer the time on core features?
+
+## What was built (end of project)
+
+All v1 scope above was delivered, with these notes:
+- **Insights:** headcount, total, average, median, lowest and highest pay by country, department or job title
+  (active employees by default, other statuses selectable). Distribution bands and outlier flags were not built.
+- **Access control** (added beyond the original draft, ADR-0004): four roles, regional officers limited to their country,
+  rate limiting. Salary history and an audit trail remain out of scope; they are the natural next step
+  ([tradeoffs](../tradeoffs.md)).
+- **Employees can only be saved in currencies that have an exchange rate**, so nobody silently drops out of the insights.
+- **Deployment:** one Docker image serving the UI and API ([ADR-0006](../adr/0006-deployment.md)); the image build and a
+  live host were not verified.
+- Measured response times: [performance](../performance.md).
+
