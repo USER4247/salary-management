@@ -28,3 +28,12 @@ _Coming soon._
 ## Deployment
 
 _Coming soon._
+
+## Workflow
+
+- Trunk-based: short-lived branches named `type/short-description`, merged to `main` via PR
+  using merge commits ([ADR-0001](docs/adr/0001-trunk-based-development.md)).
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org/)
+  (`feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`).
+- Work is test-first where practical: failing test, implementation, refactor, as separate small commits.
+- Secrets are never committed ([ADR-0002](docs/adr/0002-configuration-and-secrets.md)).
