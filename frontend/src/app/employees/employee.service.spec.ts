@@ -39,3 +39,27 @@ describe('EmployeeService', () => {
     request.flush({ content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 });
   });
 });
+
+describe('EmployeeService writes', () => {
+  const input = {
+    fullName: 'A B', email: 'a@b.co', country: 'IN', department: 'Finance', jobTitle: 'Accountant',
+    annualSalary: 1, currency: 'INR', hireDate: '2024-01-01', status: 'ACTIVE',
+  };
+
+  it('creates, updates and deletes through the matching endpoints', () => {
+    TestBed.configureTestingModule({ providers: authTestProviders() });
+    const service = TestBed.inject(EmployeeService);
+    const backend = TestBed.inject(HttpTestingController);
+
+    service.create(input).subscribe();
+    const create = backend.expectOne('/api/employees');
+    expect([create.request.method, create.request.body]).toEqual(['POST', input]);
+    create.flush({});
+
+    service.update(7, input).subscribe();
+    expect(backend.expectOne('/api/employees/7').request.method).toBe('PUT');
+
+    service.remove(7).subscribe();
+    expect(backend.expectOne('/api/employees/7').request.method).toBe('DELETE');
+  });
+});

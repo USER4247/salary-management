@@ -3,6 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -13,6 +15,8 @@ import { MatTableModule } from '@angular/material/table';
 import { catchError, debounceTime, distinctUntilChanged, of, Subject, switchMap, tap } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { COUNTRIES, DEPARTMENTS, STATUSES } from '../core/reference-data';
+import { ConfirmDialog } from '../shared/confirm-dialog';
+import { EmployeeForm } from './employee-form';
 import { Employee, EmployeePage, EmployeeQuery, EmployeeService } from './employee.service';
 
 /**
@@ -36,6 +40,9 @@ import { Employee, EmployeePage, EmployeeQuery, EmployeeService } from './employ
             {{ page()?.totalElements ?? 0 }} employees
           }
         </mat-card-subtitle>
+        @if (auth.can('create', 'Employee')) {
+          <button mat-flat-button type="button" class="add" (click)="add()">Add employee</button>
+        }
       </mat-card-header>
 
       <mat-card-content>
@@ -121,6 +128,18 @@ import { Employee, EmployeePage, EmployeeQuery, EmployeeService } from './employ
               <td mat-cell *matCellDef="let e"><span class="status {{ e.status }}">{{ statusLabel(e.status) }}</span></td>
             </ng-container>
 
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let e" class="number">
+                @if (auth.can('update', 'Employee')) {
+                  <button mat-button type="button" (click)="edit(e)" [attr.aria-label]="'Edit ' + e.fullName">Edit</button>
+                }
+                @if (auth.can('delete', 'Employee')) {
+                  <button mat-button type="button" (click)="remove(e)" [attr.aria-label]="'Delete ' + e.fullName">Delete</button>
+                }
+              </td>
+            </ng-container>
+
             <tr mat-header-row *matHeaderRowDef="columns"></tr>
             <tr mat-row *matRowDef="let row; columns: columns"></tr>
           </table>
@@ -136,6 +155,8 @@ import { Employee, EmployeePage, EmployeeQuery, EmployeeService } from './employ
     </mat-card>
   `,
   styles: `
+    mat-card-header { align-items: center; }
+    .add { margin-left: auto; }
     .filters { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
     .search { flex: 1 1 280px; }
     .table-wrap { overflow-x: auto; }
@@ -151,12 +172,14 @@ import { Employee, EmployeePage, EmployeeQuery, EmployeeService } from './employ
 })
 export class EmployeeList {
   private readonly employeeService = inject(EmployeeService);
-  private readonly auth = inject(AuthService);
+  protected readonly auth = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
 
   protected readonly countries = COUNTRIES;
   protected readonly departments = DEPARTMENTS;
   protected readonly statuses = STATUSES;
-  protected readonly columns = ['fullName', 'country', 'department', 'jobTitle', 'annualSalary', 'hireDate', 'status'];
+  protected readonly columns = ['fullName', 'country', 'department', 'jobTitle', 'annualSalary', 'hireDate', 'status', 'actions'];
 
   protected readonly searchControl = new FormControl('', { nonNullable: true });
   protected readonly query = signal<EmployeeQuery>({
@@ -217,6 +240,36 @@ export class EmployeeList {
 
   protected reload(): void {
     this.requests.next(this.query());
+  }
+
+  protected add(): void {
+    this.openForm({ limitedToCountry: this.limitedTo() }, 'Employee added');
+  }
+
+  protected edit(employee: Employee): void {
+    this.openForm({ employee, limitedToCountry: this.limitedTo() }, 'Employee updated');
+  }
+
+  /** Asks first, then deletes on the server and refreshes the list. */
+  protected remove(employee: Employee): void {
+    this.dialog.open(ConfirmDialog, {
+      data: { title: 'Delete employee?', message: `${employee.fullName} will be removed permanently.`, confirmLabel: 'Delete' },
+    }).afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.employeeService.remove(employee.id).subscribe({
+        next: () => { this.snackBar.open('Employee deleted', 'OK', { duration: 3000 }); this.reload(); },
+        error: () => this.snackBar.open('Could not delete the employee', 'OK', { duration: 5000 }),
+      });
+    });
+  }
+
+  private openForm(data: { employee?: Employee; limitedToCountry: string | null }, successMessage: string): void {
+    this.dialog.open(EmployeeForm, { data, autoFocus: 'first-tabbable' }).afterClosed().subscribe((saved) => {
+      if (saved) {   // closed with a saved employee (not cancelled)
+        this.snackBar.open(successMessage, 'OK', { duration: 3000 });
+        this.reload();
+      }
+    });
   }
 
   protected money(employee: Employee): string {

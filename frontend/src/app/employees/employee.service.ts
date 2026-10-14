@@ -36,9 +36,34 @@ export interface EmployeeQuery {
   status: string;
 }
 
+/** What the add and edit form sends (everything except the id). */
+export interface EmployeeInput {
+  fullName: string;
+  email: string;
+  country: string;
+  department: string;
+  jobTitle: string;
+  annualSalary: number;
+  currency: string;
+  hireDate: string;   // yyyy-MM-dd
+  status: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
   private readonly http = inject(HttpClient);
+
+  create(input: EmployeeInput): Observable<Employee> {
+    return this.http.post<Employee>('/api/employees', input);
+  }
+
+  update(id: number, input: EmployeeInput): Observable<Employee> {
+    return this.http.put<Employee>(`/api/employees/${id}`, input);
+  }
+
+  remove(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/employees/${id}`);
+  }
 
   list(query: EmployeeQuery): Observable<EmployeePage> {
     let params = new HttpParams()

@@ -1,8 +1,10 @@
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
+import { of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService } from '../core/auth.service';
 import { authTestProviders, sessionFor } from '../core/testing';
@@ -124,6 +126,82 @@ describe('EmployeeList', () => {
 
       expect(page().querySelector('[role=alert]')).toBeNull();
       expect(page().querySelectorAll('tr[mat-row]')).toHaveLength(1);
+    });
+  });
+
+  describe('changing employees', () => {
+    /** Stands in for the dialog box: pretend the user closed it with this result. */
+    const dialogClosesWith = (result: unknown) =>
+      vi.spyOn(TestBed.inject(MatDialog), 'open').mockReturnValue({ afterClosed: () => of(result) } as never);
+    const button = (label: string) =>
+      Array.from(page().querySelectorAll<HTMLButtonElement>('button')).find((b) => b.textContent?.includes(label));
+
+    beforeEach(async () => open([{ action: 'manage', subject: 'all' }]));
+
+    it('opens the add form and refreshes the list after saving', async () => {
+      lastRequest().flush(pageOf([asha]));
+      await fixture.whenStable();
+      const open = dialogClosesWith({ ...asha, id: 9 });
+
+      button('Add employee')!.click();
+
+      expect(open).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ data: { limitedToCountry: null } }));
+      expect(lastRequest()).toBeDefined();   // the list was asked for again
+    });
+
+    it('does not refresh when the form is cancelled', async () => {
+      lastRequest().flush(pageOf([asha]));
+      await fixture.whenStable();
+      dialogClosesWith(undefined);
+
+      button('Add employee')!.click();
+
+      expect(backend.match((r) => r.url === '/api/employees')).toHaveLength(0);
+    });
+
+    it('opens the edit form with the chosen employee', async () => {
+      lastRequest().flush(pageOf([asha]));
+      await fixture.whenStable();
+      const open = dialogClosesWith(undefined);
+
+      button('Edit')!.click();
+
+      expect(open).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ data: { employee: asha, limitedToCountry: null } }));
+    });
+
+    it('deletes only after the user confirms, then refreshes', async () => {
+      lastRequest().flush(pageOf([asha]));
+      await fixture.whenStable();
+      dialogClosesWith(true);
+
+      button('Delete')!.click();
+      backend.expectOne('/api/employees/1').flush(null, { status: 204, statusText: 'No Content' });
+
+      expect(lastRequest()).toBeDefined();
+    });
+
+    it('does not delete when the user cancels', async () => {
+      lastRequest().flush(pageOf([asha]));
+      await fixture.whenStable();
+      dialogClosesWith(false);
+
+      button('Delete')!.click();
+
+      backend.expectNone('/api/employees/1');
+    });
+  });
+
+  describe('for someone who may only read', () => {
+    beforeEach(async () => open([{ action: 'read', subject: 'Employee' }]));
+
+    it('shows no add, edit or delete buttons', async () => {
+      lastRequest().flush(pageOf([asha]));
+      await fixture.whenStable();
+
+      const labels = Array.from(page().querySelectorAll('button')).map((b) => b.textContent?.trim());
+      expect(labels).not.toContain('Add employee');
+      expect(labels).not.toContain('Edit');
+      expect(labels).not.toContain('Delete');
     });
   });
 

@@ -13,6 +13,14 @@ export const COUNTRIES = [
   { code: 'BR', name: 'Brazil' },
 ];
 
+/** The currency each country's employees are normally paid in (used to pre-fill the form). */
+export const COUNTRY_CURRENCY: Record<string, string> = {
+  US: 'USD', IN: 'INR', GB: 'GBP', DE: 'EUR', CA: 'CAD', FR: 'EUR', AU: 'AUD', JP: 'JPY', SG: 'SGD', BR: 'BRL',
+};
+
+/** Currencies the server can convert to dollars (see FxRates on the backend). */
+export const CURRENCIES = ['USD', 'INR', 'GBP', 'EUR', 'CAD', 'AUD', 'JPY', 'SGD', 'BRL'];
+
 export const DEPARTMENTS = [
   'Engineering', 'Sales', 'Operations', 'Customer Support', 'Marketing', 'Finance', 'Product', 'Human Resources',
 ];
