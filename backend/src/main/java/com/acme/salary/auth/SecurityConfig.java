@@ -79,6 +79,8 @@ class SecurityConfig {
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                         // Login has no session to hijack yet (it needs the password), so it is exempt.
                         .ignoringRequestMatchers("/api/auth/login"))
+                // Both run before everything else, in this order: first log the call, then maybe turn it away.
+                .addFilterBefore(new RequestLogFilter(), CsrfFilter.class)
                 .addFilterBefore(new RateLimitFilter(requestsPerMinute, loginPerMinute, clock), CsrfFilter.class)
                 .addFilterAfter(csrfCookieWriter(), BasicAuthenticationFilter.class)
                 .addFilterBefore(jwtCookieFilter(jwtDecoder, unauthorized), AuthorizationFilter.class)
@@ -108,7 +110,9 @@ class SecurityConfig {
         // Skip login/refresh/logout: an expired cookie must not block the very call that replaces it.
         filter.setRequestMatcher(request -> !TOKENLESS_PATHS.contains(pathOf(request)));
         // After a successful check just carry on with the request (the default would redirect like a login form).
-        filter.setSuccessHandler((request, response, authentication) -> { });
+        // We also note who is calling, so the request log can print it.
+        filter.setSuccessHandler((request, response, authentication) ->
+                request.setAttribute(RequestLogFilter.USER_ATTRIBUTE, authentication.getName()));
         filter.setFailureHandler(new AuthenticationEntryPointFailureHandler(unauthorized));
         return filter;
     }
