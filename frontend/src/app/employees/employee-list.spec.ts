@@ -63,6 +63,27 @@ describe('EmployeeList', () => {
       expect(page().textContent).toContain('10000 employees');
     });
 
+    it('asks for the newest employees first, and shows their IDs', async () => {
+      const first = lastRequest();
+      expect(first.request.params.get('sort')).toBe('id,desc');
+      expect(first.request.params.get('page')).toBe('0');
+      first.flush(pageOf([{ ...john, id: 10_001 }, asha]));
+      await fixture.whenStable();
+
+      const ids = Array.from(page().querySelectorAll('td.id')).map((cell) => cell.textContent?.trim());
+      expect(ids).toEqual(['10001', '1']);
+    });
+
+    it('goes back to newest first when a column sort is cleared', async () => {
+      lastRequest().flush(pageOf([asha]));
+      await fixture.whenStable();
+
+      fixture.debugElement.query(By.directive(MatSort)).injector.get(MatSort)
+        .sortChange.emit({ active: 'annualSalary', direction: '' });
+
+      expect(lastRequest().request.params.get('sort')).toBe('id,desc');
+    });
+
     it('offers the country filter', async () => {
       lastRequest().flush(pageOf([asha]));
       await fixture.whenStable();
@@ -147,6 +168,25 @@ describe('EmployeeList', () => {
 
       expect(open).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ data: { limitedToCountry: null } }));
       expect(lastRequest()).toBeDefined();   // the list was asked for again
+    });
+
+    it('shows the new employee at the top: back to page one, newest first', async () => {
+      lastRequest().flush(pageOf([asha], 100));
+      await fixture.whenStable();
+      // the user had moved to page 3 and sorted by name
+      fixture.debugElement.query(By.directive(MatPaginator)).injector.get(MatPaginator)
+        .page.emit({ pageIndex: 2, pageSize: 25, length: 100, previousPageIndex: 0 });
+      lastRequest().flush(pageOf([asha], 100));
+      fixture.debugElement.query(By.directive(MatSort)).injector.get(MatSort)
+        .sortChange.emit({ active: 'fullName', direction: 'asc' });
+      lastRequest().flush(pageOf([asha], 100));
+      dialogClosesWith({ ...asha, id: 10_001 });
+
+      button('Add employee')!.click();
+
+      const request = lastRequest().request;
+      expect(request.params.get('page')).toBe('0');
+      expect(request.params.get('sort')).toBe('id,desc');
     });
 
     it('does not refresh when the form is cancelled', async () => {

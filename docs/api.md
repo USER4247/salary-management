@@ -156,7 +156,7 @@ A page of employees.
 | Parameter | Meaning |
 |---|---|
 | `page`, `size` | paging (see conventions) |
-| `sort` | `field,direction`, for example `annualSalary,desc`. Fields: `fullName`, `email`, `country`, `department`, `jobTitle`, `annualSalary`, `hireDate`, `status`. Default `fullName,asc`. Anything else → `400`. |
+| `sort` | `field,direction`, for example `annualSalary,desc`. Fields: `id`, `fullName`, `email`, `country`, `department`, `jobTitle`, `annualSalary`, `hireDate`, `status`. **Default `id,desc`: newest first** (the highest `id` is the most recently added employee). Anything else → `400`. |
 | `search` | text found in name, email or job title (not case sensitive; `%` and `_` are plain characters) |
 | `country`, `department`, `status` | exact filters (`status` must be one of the three values, else `400`) |
 
