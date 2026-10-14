@@ -64,6 +64,20 @@ public class Employee {
         this.status = status;
     }
 
+    /** Replaces every editable field at once (used by the edit form, which always sends the whole employee). */
+    public void update(String fullName, String email, String country, String department, String jobTitle,
+                       long annualSalary, String currency, String hireDate, String status) {
+        this.fullName = fullName;
+        this.email = email;
+        this.country = country;
+        this.department = department;
+        this.jobTitle = jobTitle;
+        this.annualSalary = annualSalary;
+        this.currency = currency;
+        this.hireDate = hireDate;
+        this.status = status;
+    }
+
     public Long getId() { return id; }
     public String getFullName() { return fullName; }
     public String getEmail() { return email; }

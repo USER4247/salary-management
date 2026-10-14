@@ -16,6 +16,11 @@ public class FxRates {
             "USD", 1.0, "INR", 83.0, "GBP", 0.79, "EUR", 0.92, "CAD", 1.36,
             "AUD", 1.52, "JPY", 150.0, "SGD", 1.34, "BRL", 5.0);
 
+    /** Can this currency be compared with the others? Employees may only be saved in currencies that can. */
+    public boolean supports(String currency) {
+        return PER_USD.containsKey(currency);
+    }
+
     public double toUsd(long amount, String currency) {
         Double rate = PER_USD.get(currency);
         if (rate == null) {
