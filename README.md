@@ -88,6 +88,7 @@ All commands run from the repository root.
 | `npm run db:seed -- --count 500` | Loads 500 employees instead of 10,000 |
 | `npm run db:seed -- --db path/to/file.db` | Targets another database file |
 | `npm run db:seed -- --emit-sql file.sql` | Writes the demo data as SQL instead (used to refresh `backend/src/main/resources/db/seed/employees.sql`) |
+| `npm run db:reset` | **Deletes the local database** (and its WAL files) so the next start is completely fresh. Stop the backend first. See "Start fresh" below. |
 | `npm test` | Backend and frontend tests |
 | `npm run test:backend` | Backend tests only (`./mvnw verify` in `backend/`) |
 | `npm run test:frontend` | Frontend tests only |
@@ -101,6 +102,21 @@ Running a part on its own:
 | `cd frontend && npm ci && npm start` | Frontend dev server only |
 | `cd frontend && npm run build` | Production build of the frontend |
 | `docker build -t salary-management .` | Builds the single deployable image (see Deploy) |
+
+### Start fresh
+
+The database is a single file (`backend/salary.db`). It keeps everything, including any employees you added, edited or
+deleted while trying the app. To go back to a clean state, or to see the app start the way a reviewer would see it:
+
+```bash
+# 1. stop the backend (Ctrl+C in the terminal running npm run dev:local)
+npm run db:reset          # deletes the database file
+npm run dev:local:seed    # recreates the tables and demo accounts, loads the 10,000 employees
+```
+
+Only the local development database is touched, and only data that can be recreated (demo accounts and generated
+employees). It cannot affect the Docker image or a hosted copy. If the backend is still running, the command refuses and
+tells you to stop it, so it never deletes a database that is in use.
 
 ### Settings (environment variables)
 
@@ -123,6 +139,7 @@ The defaults are right for local use. The full list is in [`.env.example`](.env.
 | `The Angular CLI requires a minimum Node.js version` | Use Node 22.22.3+ (see the note under Prerequisites) |
 | Port 8080 or 4200 already in use | Stop the other program; these ports are fixed in `dev:local` |
 | `npm run db:seed` says the database or the table does not exist | Start the backend once (`npm run dev:local`), then run it again |
+| `npm run db:reset` says the database is in use | The backend is still running: stop it first (`Ctrl+C`), then run the reset again |
 | Sign-in page keeps asking after a restart | `dev:local` makes a new secret each start, which ends old sessions: just sign in again |
 | `429 Too many requests` | The per-IP rate limit; wait a minute |
 
