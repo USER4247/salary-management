@@ -6,7 +6,10 @@ const { spawn, spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { root, frontendEnv } = require('./env');
+const { root, frontendEnv, backendEnv } = require('./env');
+
+// `npm run dev:local:seed` passes --seed: also load the demo employees if the database is empty.
+const seed = process.argv.includes('--seed');
 
 const isWin = process.platform === 'win32';
 const backendDir = path.join(root, 'backend');
@@ -45,18 +48,13 @@ if (!fs.existsSync(path.join(frontendDir, 'node_modules'))) {
 }
 
 const wrapper = path.join(backendDir, isWin ? 'mvnw.cmd' : 'mvnw');
-// Dev-only defaults so a fresh checkout runs. The secret is random per start, so sessions end on restart.
-const backendEnv = {
-  ...process.env,
-  JWT_SECRET: process.env.JWT_SECRET || require('node:crypto').randomBytes(48).toString('hex'),
-  AUTH_COOKIE_SECURE: process.env.AUTH_COOKIE_SECURE || 'false',
-};
-const backend = run('backend', `"${wrapper}"`, ['spring-boot:run'], backendDir, backendEnv);
+const backend = run('backend', `"${wrapper}"`, ['spring-boot:run'], backendDir, backendEnv({ seed }));
 const frontend = run('frontend', 'npm', ['start'], frontendDir, frontendEnv());
 const children = [backend, frontend];
 
 console.log('Backend:  http://localhost:8080/actuator/health');
 console.log('Frontend: http://localhost:4200');
+if (seed) console.log('Demo employees will be loaded now if the database is empty (watch for "Seeded" in the backend log).');
 console.log('Press Ctrl+C to stop both.');
 
 let stopping = false;

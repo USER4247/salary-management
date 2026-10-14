@@ -36,6 +36,7 @@ class RateLimitFilterTest {
         assertThat(blocked.getStatus()).isEqualTo(429);
         assertThat(Long.parseLong(blocked.getHeader("Retry-After"))).isBetween(1L, 60L);
         assertThat(blocked.getContentAsString()).contains("Too Many Requests");
+        assertThat(blocked.getContentType()).isEqualTo("application/problem+json;charset=UTF-8");
     }
 
     @Test

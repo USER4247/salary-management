@@ -36,4 +36,18 @@ function node22Binary() {
   return path.join(home, process.platform === 'win32' ? 'node.exe' : path.join('bin', 'node'));
 }
 
-module.exports = { root, frontendEnv, node22Binary };
+/**
+ * Settings handed to the backend by `npm run dev:local`, so a fresh checkout runs with no setup.
+ * The JWT secret is random per start, so sessions end when the backend restarts. With `seed: true` the backend
+ * loads the 10,000 demo employees on start-up, but only when the employees table is empty.
+ */
+function backendEnv({ seed = false } = {}) {
+  return {
+    ...process.env,
+    JWT_SECRET: process.env.JWT_SECRET || require('node:crypto').randomBytes(48).toString('hex'),
+    AUTH_COOKIE_SECURE: process.env.AUTH_COOKIE_SECURE || 'false',
+    ...(seed ? { SEED_EMPLOYEES: 'true' } : {}),
+  };
+}
+
+module.exports = { root, frontendEnv, backendEnv, node22Binary };

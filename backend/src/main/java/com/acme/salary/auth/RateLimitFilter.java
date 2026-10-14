@@ -80,7 +80,7 @@ class RateLimitFilter extends OncePerRequestFilter {
             log.warn("Rate limit hit by {} on {} {}; asked to wait {}s", ip, request.getMethod(), request.getRequestURI(), wait);
             response.setStatus(429);
             response.setHeader("Retry-After", String.valueOf(wait));
-            response.setContentType("application/problem+json");
+            response.setContentType("application/problem+json;charset=UTF-8");   // say UTF-8 explicitly; the default was ISO-8859-1
             response.getWriter().write("{\"title\":\"Too Many Requests\",\"status\":429,\"detail\":\"Slow down and retry in "
                     + wait + " seconds\"}");
             return;
