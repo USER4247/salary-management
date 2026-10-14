@@ -43,7 +43,7 @@ needs answers without building pivot tables.
 - List and insight queries respond in under 500 ms at 10,000 employees (aggregation in SQL, indexed).
 - Seeding 10,000 employees completes in seconds (batched inserts).
 - Fast, deterministic unit tests; the core business rules are tested without a database.
-- Reproducible: one command to run locally (Docker Compose), configuration via environment variables.
+- Reproducible: one command to run locally (no external services; embedded SQLite), configuration via environment variables.
 
 ## Key assumptions
 - One salary per employee (current annual gross), stored in local currency.
