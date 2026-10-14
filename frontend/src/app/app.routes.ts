@@ -10,6 +10,7 @@ export const routes: Routes = [
     loadComponent: () => import('./shell/shell').then((m) => m.Shell),
     children: [
       { path: '', loadComponent: () => import('./employees/employee-list').then((m) => m.EmployeeList) },
+      { path: 'insights', loadComponent: () => import('./insights/insights-page').then((m) => m.InsightsPage) },
       { path: 'access', loadComponent: () => import('./access/access').then((m) => m.Access) },
     ],
   },

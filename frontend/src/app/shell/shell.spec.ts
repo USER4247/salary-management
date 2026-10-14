@@ -29,6 +29,20 @@ describe('Shell', () => {
     expect(page.textContent).toContain('My access');
   });
 
+  it('shows the Insights link only to people who may read insights', async () => {
+    const withoutInsights = TestBed.createComponent(Shell);
+    await withoutInsights.whenStable();
+    expect((withoutInsights.nativeElement as HTMLElement).textContent).not.toContain('Insights');
+
+    auth.signIn('x', 'y').subscribe();   // now sign in again as someone who may read insights
+    TestBed.inject(HttpTestingController).expectOne('/api/auth/login')
+      .flush(sessionFor([{ action: 'read', subject: 'Insights' }]));
+    const withInsights = TestBed.createComponent(Shell);
+    await withInsights.whenStable();
+
+    expect((withInsights.nativeElement as HTMLElement).textContent).toContain('Insights');
+  });
+
   it('signs out when the button is pressed', async () => {
     const signOut = vi.spyOn(auth, 'signOut').mockResolvedValue();
     const fixture = TestBed.createComponent(Shell);

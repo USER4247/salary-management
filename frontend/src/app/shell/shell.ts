@@ -13,6 +13,9 @@ import { AuthService } from '../core/auth.service';
       <span class="title">Salary Management</span>
       <nav>
         <a mat-button routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Employees</a>
+        @if (auth.can('read', 'Insights')) {
+          <a mat-button routerLink="/insights" routerLinkActive="active">Insights</a>
+        }
         <a mat-button routerLink="/access" routerLinkActive="active">My access</a>
       </nav>
       <span class="spacer"></span>
