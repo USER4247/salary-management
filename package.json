@@ -1,0 +1,10 @@
+{
+  "name": "salary-management",
+  "private": true,
+  "description": "Developer shortcuts for the salary-management monorepo",
+  "scripts": {
+    "dev:local": "node scripts/dev-local.js",
+    "test:backend": "cd backend && node ../scripts/mvn.js verify",
+    "test:frontend": "cd frontend && npm test -- --watch=false"
+  }
+}
