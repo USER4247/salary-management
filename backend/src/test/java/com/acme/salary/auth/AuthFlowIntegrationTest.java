@@ -71,11 +71,11 @@ class AuthFlowIntegrationTest {
 
     @Test
     void meReturnsTheUserAndTheirCaslRules() throws Exception {
-        Cookies cookies = AuthTestSupport.login(mvc, "india.hr@acme.test");
+        Cookies cookies = AuthTestSupport.login(mvc, "hr.in@acme.test");
 
         mvc.perform(get("/api/auth/me").cookie(cookies.access()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user.email").value("india.hr@acme.test"))
+                .andExpect(jsonPath("$.user.email").value("hr.in@acme.test"))
                 .andExpect(jsonPath("$.user.countryScope").value("IN"))
                 .andExpect(jsonPath("$.rules[?(@.action=='read' && @.subject=='Employee')].conditions.country").value("IN"));
     }

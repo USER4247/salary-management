@@ -63,12 +63,12 @@ class GuardIntegrationTest {
     @Test
     void roleGuardRejectsRolesThatAreNotListed() throws Exception {
         mvc.perform(get("/api/probe/managers-only").cookie(signedInAs("viewer@acme.test"))).andExpect(status().isForbidden());
-        mvc.perform(get("/api/probe/managers-only").cookie(signedInAs("india.hr@acme.test"))).andExpect(status().isForbidden());
+        mvc.perform(get("/api/probe/managers-only").cookie(signedInAs("hr.in@acme.test"))).andExpect(status().isForbidden());
     }
 
     @Test
     void countryHrIsLimitedToTheirOwnCountry() throws Exception {
-        Cookie indiaHr = signedInAs("india.hr@acme.test");
+        Cookie indiaHr = signedInAs("hr.in@acme.test");
 
         mvc.perform(put("/api/probe/employees/in/IN").cookie(indiaHr).with(csrf())).andExpect(status().isOk());
         mvc.perform(put("/api/probe/employees/in/US").cookie(indiaHr).with(csrf())).andExpect(status().isForbidden());

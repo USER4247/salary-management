@@ -86,4 +86,23 @@ class AbilityTest {
         assertThat(Rule.of(READ, EMPLOYEE, Map.of("country", "IN")).toCasl()).isEqualTo(
                 Map.of("action", "read", "subject", "Employee", "conditions", Map.of("country", "IN")));
     }
+
+    @Test
+    void countryLimitIsEmptyForRolesThatMaySeeEveryCountry() {
+        for (Role role : new Role[] {Role.SUPERADMIN, Role.HR_MANAGER, Role.HR_VIEWER}) {
+            assertThat(Ability.forRole(role, null).countryLimit(READ, EMPLOYEE)).as(role.name()).isEmpty();
+        }
+    }
+
+    @Test
+    void countryLimitListsTheCountriesOfARegionalOfficer() {
+        Ability ability = Ability.forRole(Role.COUNTRY_HR, "IN");
+
+        assertThat(ability.countryLimit(READ, EMPLOYEE)).contains(java.util.Set.of("IN"));
+    }
+
+    @Test
+    void countryLimitIsAnEmptySetWhenNothingIsAllowedAtAll() {
+        assertThat(new Ability(List.of()).countryLimit(READ, EMPLOYEE)).contains(java.util.Set.of());
+    }
 }
