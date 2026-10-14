@@ -1,6 +1,5 @@
-package com.acme.salary.auth.user;
+package com.acme.salary.auth;
 
-import com.acme.salary.auth.ability.Role;
 import java.time.Clock;
 import java.util.List;
 import org.slf4j.Logger;
@@ -12,8 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /**
- * Creates one demo user per role so a reviewer can sign in. Only for the assessment build:
- * disable with {@code SEED_DEMO_USERS=false}. The passwords are public on the sign-in page by design.
+ * Creates one demo user per role at startup so a reviewer can sign in right away.
+ * Assessment build only: turn it off with SEED_DEMO_USERS=false. The password is public on the sign-in page.
  */
 @Component
 @ConditionalOnProperty(name = "app.seed.demo-users", havingValue = "true")
@@ -34,14 +33,16 @@ class DemoUserSeeder implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        List<User> demo = List.of(
-                demoUser("admin@acme.test", "Alex Admin", Role.HR_ADMIN, null),
+        List<User> demoUsers = List.of(
+                demoUser("superadmin@acme.test", "Sam Superadmin", Role.SUPERADMIN, null),
+                demoUser("manager@acme.test", "Maya Manager", Role.HR_MANAGER, null),
                 demoUser("viewer@acme.test", "Vera Viewer", Role.HR_VIEWER, null),
                 demoUser("india.hr@acme.test", "Indira HR", Role.COUNTRY_HR, "IN"));
-        for (User user : demo) {
-            if (users.findByEmailIgnoreCase(user.getEmail()).isEmpty()) {
+
+        for (User user : demoUsers) {
+            if (users.findByEmailIgnoreCase(user.getEmail()).isEmpty()) {   // only create the missing ones
                 users.save(user);
-                log.info("Seeded demo user {} ({})", user.getEmail(), user.getRole());
+                log.info("Created demo user {} ({})", user.getEmail(), user.getRole());
             }
         }
     }

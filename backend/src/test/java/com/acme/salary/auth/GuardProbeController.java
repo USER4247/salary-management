@@ -1,8 +1,7 @@
-package com.acme.salary.auth.security;
+package com.acme.salary.auth;
 
-import com.acme.salary.auth.ability.Action;
-import com.acme.salary.auth.ability.Role;
-import com.acme.salary.auth.ability.Subject;
+import com.acme.salary.auth.Ability.Action;
+import com.acme.salary.auth.Ability.Subject;
 import java.util.Map;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,7 +12,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Test-only endpoints that exercise each guard; they are not part of the product API. */
+/** Test-only endpoints, one per guard, so the guards can be tested before real endpoints exist. */
 @RestController
 @RequestMapping("/api/probe")
 class GuardProbeController {
@@ -42,13 +41,13 @@ class GuardProbeController {
         return "delete";
     }
 
-    @GetMapping("/admin-only")
-    @RequireRole(Role.HR_ADMIN)
-    String adminOnly() {
-        return "admin";
+    @GetMapping("/managers-only")
+    @RequireRole(Role.HR_MANAGER)
+    String managersOnly() {
+        return "managers";
     }
 
-    /** Resource-level check: the type-level guard passes, then the concrete resource is checked. */
+    /** Two steps: the guard checks "may update employees at all", then the code checks this one country. */
     @PutMapping("/employees/in/{country}")
     @CheckAbility(action = Action.UPDATE, subject = Subject.EMPLOYEE)
     String updateInCountry(@PathVariable String country) {

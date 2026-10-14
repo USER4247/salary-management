@@ -1,6 +1,5 @@
-package com.acme.salary.auth.user;
+package com.acme.salary.auth;
 
-import com.acme.salary.auth.ability.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+/** A person who can sign in. Maps to the "users" table. */
 @Entity
 @Table(name = "users")
 public class User {
@@ -22,6 +22,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    /** Never the real password: only a BCrypt hash. */
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
@@ -32,6 +33,7 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    /** Only used by COUNTRY_HR: the country they are limited to, e.g. "IN". */
     @Column(name = "country_scope")
     private String countryScope;
 
@@ -42,6 +44,7 @@ public class User {
     private Instant createdAt;
 
     protected User() {
+        // required by JPA
     }
 
     public User(String email, String passwordHash, String fullName, Role role, String countryScope, Instant createdAt) {
@@ -53,35 +56,12 @@ public class User {
         this.createdAt = createdAt;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public String getCountryScope() {
-        return countryScope;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
+    public Long getId() { return id; }
+    public String getEmail() { return email; }
+    public String getPasswordHash() { return passwordHash; }
+    public String getFullName() { return fullName; }
+    public Role getRole() { return role; }
+    public String getCountryScope() { return countryScope; }
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
 }

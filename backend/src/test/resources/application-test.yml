@@ -9,5 +9,8 @@ app:
   auth:
     jwt-secret: test-only-secret-that-is-at-least-32-bytes-long
     cookie-secure: false
+  rate-limit:        # high, so the many logins in the test suite are not throttled
+    requests-per-minute: 100000
+    login-per-minute: 100000
   seed:
     demo-users: true

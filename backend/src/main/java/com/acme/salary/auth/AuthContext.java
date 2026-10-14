@@ -1,8 +1,5 @@
-package com.acme.salary.auth.security;
+package com.acme.salary.auth;
 
-import com.acme.salary.auth.ability.Ability;
-import com.acme.salary.auth.ability.AbilityFactory;
-import com.acme.salary.auth.ability.Role;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,32 +7,27 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 /**
- * The authenticated caller as seen by application code. Inject it into a handler to make
- * resource-level checks, for example {@code authContext.currentAbility().can(UPDATE, EMPLOYEE, Map.of("country", c))}.
+ * "Who is calling right now?" Inject this into a controller to read the signed-in user's token and abilities.
+ * Example: {@code authContext.currentAbility().can(UPDATE, EMPLOYEE, Map.of("country", employee.getCountry()))}.
  */
 @Component
 public class AuthContext {
-
-    private final AbilityFactory abilityFactory;
-
-    public AuthContext(AbilityFactory abilityFactory) {
-        this.abilityFactory = abilityFactory;
-    }
 
     public Jwt currentJwt() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
             return jwt;
         }
-        throw new AccessDeniedException("No authenticated user");
+        throw new AccessDeniedException("Nobody is signed in");
     }
 
     public Role currentRole() {
         return Role.valueOf(currentJwt().getClaimAsString("role"));
     }
 
+    /** Rebuilt from the role in the token on every call, so permission changes never go stale. */
     public Ability currentAbility() {
         Jwt jwt = currentJwt();
-        return abilityFactory.forRole(Role.valueOf(jwt.getClaimAsString("role")), jwt.getClaimAsString("countryScope"));
+        return Ability.forRole(Role.valueOf(jwt.getClaimAsString("role")), jwt.getClaimAsString("countryScope"));
     }
 }

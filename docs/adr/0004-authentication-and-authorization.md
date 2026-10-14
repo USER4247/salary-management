@@ -1,53 +1,52 @@
 # ADR-0004: Authentication and authorization
 
-- Status: Accepted (supersedes the "auth out of scope" note in the first requirements draft)
+- Status: Accepted. A first, more layered version was replaced by this simpler one (see "History").
 
 ## Context
-The brief names a single persona, so auth is not required. It is added deliberately to show
-system design: separation of authentication (who are you) from authorization (what may you do),
-and a permission model that can grow without rewriting controllers.
+The brief names one persona, so auth is not required. It is added deliberately to show system design:
+separating *who you are* from *what you may do*, with a permission model that can grow. The code must stay
+easy to read: a small number of files, plain comments, and log lines at the key steps.
 
 ## Decision
 
-**Session**
-- Access token: short-lived (15 min) signed JWT with custom claims `role` and `countryScope`.
-  Sent as an `HttpOnly`, `SameSite=Strict` cookie, so scripts cannot read it.
-- Refresh token: opaque random value (not a JWT), 7 days, in an `HttpOnly` cookie scoped to
-  `/api/auth`. Only its SHA-256 hash is stored. It is **rotated on every use**; presenting an
-  already-used token revokes the whole token family (theft detection).
-- Signing: HS256 with `JWT_SECRET` from the environment (ADR-0002). RS256 is the production
-  option but needs key management that is out of proportion here.
-- CSRF: cookies make CSRF possible, so `SameSite=Strict` is combined with Spring's cookie CSRF
-  token, which Angular's `HttpClient` already echoes in `X-XSRF-TOKEN`. Only `POST /api/auth/login`
-  is exempt (it requires credentials and has no session to hijack).
-- UI and API are served from the same origin (dev proxy locally; Spring serves the built UI when deployed).
+**Tokens and cookies**
+- Access token: signed JWT (HS256), 15 minutes, with custom claims `email`, `role`, `countryScope`.
+- Refresh token: 32 random bytes, 7 days, **one-time use** (used = deleted). Only its SHA-256 hash is stored.
+- Both travel only in `HttpOnly`, `SameSite=Strict` cookies (refresh scoped to `/api/auth`), so scripts cannot read
+  them. The JSON body carries the user, the access-token expiry and the CASL rules, never a token.
+- `JWT_SECRET` (at least 32 characters) comes from the environment (ADR-0002).
 
-**Authorization, in three layers** (mirroring guard-style architectures)
-1. *Authentication guard*: Spring Security resource-server filter validating the cookie JWT.
-2. *Access guard*: `@RequireRole(...)` for coarse role checks.
-3. *Policy guard*: `@CheckAbility(action, subject)` for fine-grained checks.
-   Abilities follow the CASL model (`action`, `subject`, optional `conditions`), built by an
-   `AbilityFactory` from the principal. Handlers may further check a concrete resource
-   (for example the employee's country) against the ability.
+**CSRF.** Cookies are sent automatically by browsers, so state-changing requests need a CSRF token: Spring writes an
+`XSRF-TOKEN` cookie and Angular's `HttpClient` echoes it in `X-XSRF-TOKEN`. Only `POST /api/auth/login` is exempt.
+The JWT is checked by an explicit `AuthenticationFilter`, not `oauth2ResourceServer()`, because that DSL exempts
+every token-carrying request from CSRF, which would disable the protection for cookies. An integration test
+(a cookie-authenticated POST without a CSRF token returned 200) caught this.
 
-**Tokens carry identity, not permissions.** The JWT holds role and scope; abilities are derived
-on the server, so changing a role's permissions does not leave stale tokens in circulation.
-`GET /api/auth/me` returns the ability rules in CASL's raw format for the UI to display.
-The server always enforces; the UI ability only hides controls.
+**Permissions (CASL model).** A role maps to a list of rules (`action`, `subject`, optional `conditions`) in one
+place, `Ability.forRole`. `SUPERADMIN` gets `manage` on `all` (any action, any subject). Tokens carry identity, not
+permissions, so changing a role takes effect immediately. The rules are sent to the UI in CASL's raw format for display;
+the server always enforces.
 
-**Client**: sign-in screen, route guard, interceptor that on `401` performs a single shared
-refresh and retries, a proactive refresh timer driven by the `expiresAt` returned in response
-bodies (the HttpOnly token cannot be read), sign-out that revokes server-side and clears
-state, and cross-tab sign-out through `BroadcastChannel`.
+**Guards, in three layers**
+1. JWT filter: who is calling.
+2. `@RequireRole`: coarse check by role (SUPERADMIN always passes).
+3. `@CheckAbility`: fine check by action and subject; handlers may also check a concrete resource through `AuthContext`.
 
-**Why not `oauth2ResourceServer()`:** Spring's resource-server DSL exempts every request that carries a bearer
-token from CSRF checks, which is right for an `Authorization` header but would silently disable CSRF protection when
-the token is a cookie the browser attaches by itself. An integration test (a cookie-authenticated POST without a CSRF
-token returned 200) caught this. The JWT is therefore validated by an explicit `AuthenticationFilter` with
-`JwtAuthenticationProvider`, which has no such override.
+**Rate limiting.** A per-IP fixed-window counter on `/api/**` (300 per minute) and a stricter one on login (10 per
+minute), answering `429` with `Retry-After`. It is a first line of defence only: counters are in memory (per instance,
+reset on restart), and a real flood needs a CDN or gateway in front. Behind a proxy, the forwarded client address must
+be what the server reports as the remote address.
+
+**Client.** Sign-in screen, route guard, interceptor that on `401` refreshes once and retries, a proactive refresh timer
+driven by the returned expiry, sign-out that clears server and client state, and cross-tab sign-out.
+
+## History: what was simplified, and the cost
+The first version had about 28 files: separate token, session, cookie and DTO classes, abilities split over five files,
+and refresh-token *families* that revoked the whole chain when an already-used token reappeared (theft detection).
+It was replaced by 15 flat files with comments. The one real security trade-off: a replayed refresh token is now just
+rejected instead of also ending the legitimate session. Family revocation is the documented next step.
 
 ## Consequences
-- Tokens are never reachable from JavaScript, limiting XSS impact.
-- Same-origin hosting is required; deployment must keep the UI and API on one host.
-- Demo credentials are shown on the sign-in screen for the deployed assessment build only.
-- Not included: password reset, MFA, SSO, per-device session management.
+- UI and API must share one origin (dev proxy locally; Spring serves the built UI when deployed).
+- Demo credentials appear on the sign-in screen for the assessment build only.
+- Not included: password reset, MFA, SSO, per-device session management, distributed rate limiting.

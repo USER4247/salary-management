@@ -20,10 +20,12 @@ management:
 
 app:
   auth:
-    jwt-secret: ${JWT_SECRET}               # required, >= 32 bytes; never committed (ADR-0002)
-    access-ttl: ${ACCESS_TOKEN_TTL:15m}
-    refresh-ttl: ${REFRESH_TOKEN_TTL:7d}
-    issuer: salary-management
-    cookie-secure: ${AUTH_COOKIE_SECURE:true}
+    jwt-secret: ${JWT_SECRET}               # required, at least 32 characters; never committed (ADR-0002)
+    access-ttl: ${ACCESS_TOKEN_TTL:15m}     # how long one access token lives
+    refresh-ttl: ${REFRESH_TOKEN_TTL:7d}    # how long you stay signed in without typing the password
+    cookie-secure: ${AUTH_COOKIE_SECURE:true}   # true = cookies only over HTTPS (dev script turns it off)
+  rate-limit:
+    requests-per-minute: ${RATE_LIMIT_PER_MINUTE:300}   # per IP, all /api calls
+    login-per-minute: ${RATE_LIMIT_LOGIN_PER_MINUTE:10} # per IP, login attempts (password guessing)
   seed:
     demo-users: ${SEED_DEMO_USERS:true}     # assessment build only; see DemoUserSeeder

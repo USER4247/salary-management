@@ -26,9 +26,10 @@ needs answers without building pivot tables.
 - Org-wide payroll total, normalised to one reporting currency.
 
 **Access control** (added after the initial draft, see ADR-0004)
-- Sign-in screen; session via HttpOnly cookies with a short-lived access token (JWT with custom claims) and a rotating refresh token; automatic refresh in the UI; sign-out.
-- Three roles: `HR_ADMIN` (full access), `HR_VIEWER` (read employees and insights), `COUNTRY_HR` (access limited to one country).
+- Sign-in screen; session via HttpOnly cookies with a short-lived access token (JWT with custom claims) and a one-time-use refresh token; automatic refresh in the UI; sign-out.
+- Four roles: `SUPERADMIN` (absolute access), `HR_MANAGER` (full employee management, reads insights), `HR_VIEWER` (read-only), `COUNTRY_HR` (access limited to one country).
 - Permissions modelled as CASL-style abilities (action + subject + optional condition), enforced on the server and mirrored in the UI for display only.
+- Per-IP rate limiting on the API, with a much stricter limit on login attempts.
 
 **Platform**
 - Seed script generating 10,000 realistic employees.

@@ -8,18 +8,18 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** Signs in through the real endpoint and hands back the cookies a browser would hold. */
-public final class AuthTestSupport {
+/** Signs in through the real login endpoint and returns the cookies a browser would now hold. */
+final class AuthTestSupport {
 
-    public static final String DEMO_PASSWORD = "Demo@12345";
+    static final String DEMO_PASSWORD = "Demo@12345";
 
     private AuthTestSupport() {
     }
 
-    public record Cookies(Cookie access, Cookie refresh) {
+    record Cookies(Cookie access, Cookie refresh) {
     }
 
-    public static Cookies login(MockMvc mvc, String email) throws Exception {
+    static Cookies login(MockMvc mvc, String email) throws Exception {
         MockHttpServletResponse response = mvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + email + "\",\"password\":\"" + DEMO_PASSWORD + "\"}"))
