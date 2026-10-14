@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
+import { COUNTRIES } from '../core/reference-data';
 
 /** Demo accounts for the assessment build. The password is public on purpose so reviewers can sign in. */
 const DEMO_PASSWORD = 'Demo@12345';
@@ -15,7 +16,6 @@ const DEMO_ACCOUNTS = [
   { label: 'Superadmin', email: 'superadmin@acme.test' },
   { label: 'HR Manager', email: 'manager@acme.test' },
   { label: 'HR Viewer', email: 'viewer@acme.test' },
-  { label: 'Country HR (India)', email: 'india.hr@acme.test' },
 ];
 
 @Component({
@@ -57,6 +57,16 @@ const DEMO_ACCOUNTS = [
                 <mat-chip (click)="fillDemo(account.email)">{{ account.label }}</mat-chip>
               }
             </mat-chip-set>
+
+            <mat-form-field appearance="outline" class="regional">
+              <mat-label>Regional officer (sees one country only)</mat-label>
+              <select matNativeControl (change)="fillRegional($any($event.target).value)">
+                <option value="">Choose a country...</option>
+                @for (country of countries; track country.code) {
+                  <option [value]="country.code">{{ country.name }}</option>
+                }
+              </select>
+            </mat-form-field>
           </section>
         </mat-card-content>
       </mat-card>
@@ -69,6 +79,7 @@ const DEMO_ACCOUNTS = [
     .error { color: var(--mat-sys-error); margin: 0 0 8px; }
     .demo { margin-top: 24px; font: var(--mat-sys-body-medium); }
     mat-chip { cursor: pointer; }
+    .regional { display: block; margin-top: 16px; }
   `,
 })
 export class SignIn {
@@ -77,6 +88,7 @@ export class SignIn {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly demoAccounts = DEMO_ACCOUNTS;
+  protected readonly countries = COUNTRIES;
   protected readonly demoPassword = DEMO_PASSWORD;
   protected readonly loading = signal(false);
   protected readonly error = signal('');
@@ -88,6 +100,13 @@ export class SignIn {
 
   protected fillDemo(email: string): void {
     this.form.setValue({ email, password: DEMO_PASSWORD });
+  }
+
+  /** The backend creates one regional officer per country: hr.<country code>@acme.test. */
+  protected fillRegional(countryCode: string): void {
+    if (countryCode) {
+      this.fillDemo(`hr.${countryCode.toLowerCase()}@acme.test`);
+    }
   }
 
   protected submit(): void {

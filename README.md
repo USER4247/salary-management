@@ -50,6 +50,19 @@ npm run db:seed -- --count 500 --db path/to/other.db
 It is safe to run while the backend is running (WAL mode, see [ADR-0005](docs/adr/0005-sqlite-access-wal-and-pools.md)).
 It needs Node 22+ (set `NODE22_HOME` in `.env.local` if your default Node is older).
 
+## Demo accounts
+
+The password for all of them is `Demo@12345` (assessment build only; turn off with `SEED_DEMO_USERS=false`).
+
+| Account | Role | What it sees |
+|---|---|---|
+| `superadmin@acme.test` | SUPERADMIN | everything, any action |
+| `manager@acme.test` | HR_MANAGER | all employees, full control; reads insights |
+| `viewer@acme.test` | HR_VIEWER | all employees, read-only |
+| `hr.<country>@acme.test`, e.g. `hr.in@acme.test` | COUNTRY_HR | only employees of that country (US, IN, GB, DE, CA, FR, AU, JP, SG, BR) |
+
+The sign-in page has buttons and a country picker that fill these in.
+
 Configuration is read from environment variables (see [`.env.example`](.env.example) and
 [ADR-0002](docs/adr/0002-configuration-and-secrets.md)).
 

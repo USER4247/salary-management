@@ -10,9 +10,13 @@ import { SessionResponse } from './auth.service';
 export const READ_EMPLOYEES = { action: 'read', subject: 'Employee' } as const;
 
 /** A server response for a signed-in user whose access token ends in `minutes` minutes. */
-export function sessionFor(rules: SessionResponse['rules'] = [READ_EMPLOYEES], minutes = 15): SessionResponse {
+export function sessionFor(
+  rules: SessionResponse['rules'] = [READ_EMPLOYEES],
+  minutes = 15,
+  user: Partial<SessionResponse['user']> = {},
+): SessionResponse {
   return {
-    user: { id: 1, email: 'maya@acme.test', fullName: 'Maya Manager', role: 'HR_MANAGER', countryScope: null },
+    user: { id: 1, email: 'maya@acme.test', fullName: 'Maya Manager', role: 'HR_MANAGER', countryScope: null, ...user },
     accessExpiresAt: new Date(Date.now() + minutes * 60_000).toISOString(),
     rules,
   };

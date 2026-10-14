@@ -3,15 +3,15 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService } from '../core/auth.service';
 import { authTestProviders, sessionFor } from '../core/testing';
-import { Home } from './home';
+import { Access } from './access';
 
-describe('Home', () => {
+describe('Access', () => {
   let auth: AuthService;
   let backend: HttpTestingController;
 
   beforeEach(() => {
     vi.stubGlobal('BroadcastChannel', undefined);
-    TestBed.configureTestingModule({ imports: [Home], providers: authTestProviders() });
+    TestBed.configureTestingModule({ imports: [Access], providers: authTestProviders() });
     auth = TestBed.inject(AuthService);
     backend = TestBed.inject(HttpTestingController);
   });
@@ -21,17 +21,10 @@ describe('Home', () => {
   async function renderFor(rules: Parameters<typeof sessionFor>[0]): Promise<HTMLElement> {
     auth.signIn('x', 'y').subscribe();
     backend.expectOne('/api/auth/login').flush(sessionFor(rules));
-    const fixture = TestBed.createComponent(Home);
+    const fixture = TestBed.createComponent(Access);
     await fixture.whenStable();
     return fixture.nativeElement as HTMLElement;
   }
-
-  it('greets the user and shows their role', async () => {
-    const page = await renderFor([{ action: 'read', subject: 'Employee' }]);
-
-    expect(page.textContent).toContain('Maya Manager');
-    expect(page.textContent).toContain('HR_MANAGER');
-  });
 
   it('shows Yes, No and "Own country only" from the rules', async () => {
     const page = await renderFor([

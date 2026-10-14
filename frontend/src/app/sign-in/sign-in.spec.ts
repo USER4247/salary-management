@@ -59,6 +59,16 @@ describe('SignIn', () => {
     expect(page().querySelector<HTMLInputElement>('input[type=password]')!.value).toBe('Demo@12345');
   });
 
+  it('fills in the regional officer account for the chosen country', async () => {
+    const choose = page().querySelector<HTMLSelectElement>('select')!;
+    choose.value = 'IN';
+    choose.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+
+    expect(page().querySelector<HTMLInputElement>('input[type=email]')!.value).toBe('hr.in@acme.test');
+    expect(page().querySelector<HTMLInputElement>('input[type=password]')!.value).toBe('Demo@12345');
+  });
+
   it('signs in and goes home on success', async () => {
     await submitWith('maya@acme.test', 'secret');
 
