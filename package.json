@@ -4,6 +4,7 @@
   "description": "Developer shortcuts for the salary-management monorepo",
   "scripts": {
     "dev:local": "node scripts/dev-local.js",
+    "dev:local:seed": "node scripts/dev-local.js --seed",
     "db:seed": "node scripts/run-node22.js scripts/seed-employees.js",
     "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "cd backend && node ../scripts/mvn.js verify",
