@@ -1,11 +1,6 @@
 spring:
   application:
     name: salary-management
-  datasource:
-    url: ${DB_URL:jdbc:sqlite:./salary.db?journal_mode=WAL&busy_timeout=5000}
-    driver-class-name: org.sqlite.JDBC
-    hikari:
-      maximum-pool-size: 1   # SQLite allows a single writer; see ADR-0003
   jpa:
     open-in-view: false
     hibernate:
@@ -19,6 +14,10 @@ management:
         include: health,info
 
 app:
+  db:
+    url: ${DB_URL:jdbc:sqlite:./salary.db}          # a plain SQLite file; WAL mode and pools are set in code
+    reader-pool-size: ${DB_READER_POOL_SIZE:4}      # read-only connections (reads never wait for writes)
+    busy-timeout: ${DB_BUSY_TIMEOUT:5s}             # how long to wait if another process holds the write lock
   auth:
     jwt-secret: ${JWT_SECRET}               # required, at least 32 characters; never committed (ADR-0002)
     access-ttl: ${ACCESS_TOKEN_TTL:15m}     # how long one access token lives
