@@ -37,6 +37,19 @@ npm run test:backend
 npm run test:frontend
 ```
 
+## Sample data
+
+Start the app once (`npm run dev:local`) so the tables exist, then:
+
+```bash
+npm run db:seed              # 10,000 realistic employees, the same every time (takes about a second)
+npm run db:seed -- --reset   # replace existing employees
+npm run db:seed -- --count 500 --db path/to/other.db
+```
+
+It is safe to run while the backend is running (WAL mode, see [ADR-0005](docs/adr/0005-sqlite-access-wal-and-pools.md)).
+It needs Node 22+ (set `NODE22_HOME` in `.env.local` if your default Node is older).
+
 Configuration is read from environment variables (see [`.env.example`](.env.example) and
 [ADR-0002](docs/adr/0002-configuration-and-secrets.md)).
 
