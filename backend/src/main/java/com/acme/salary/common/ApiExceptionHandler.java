@@ -13,9 +13,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * Turns input problems into the same JSON shape every time:
+ * Turns problems with a form's input (invalid fields, a duplicate email, an unsupported currency) into one JSON shape:
  * <pre>{ "title": "...", "status": 400, "detail": "...", "errors": { "email": "must be a valid email" } }</pre>
- * so the Angular forms can put each message under the right field.
+ * so the Angular forms can put each message under the right field. Other errors (401, 403, 404, a bad sort column)
+ * are not handled here and keep Spring Boot's plain shape {timestamp, status, error, path}; see docs/api.md.
  */
 @RestControllerAdvice
 class ApiExceptionHandler {
