@@ -23,8 +23,8 @@ npm run dev:local
 
 This starts the backend (http://localhost:8080/actuator/health) and the frontend
 (http://localhost:4200, proxying `/api` to the backend) together; Ctrl+C stops both.
-If your default Node is older than 22.22.3, point `NODE22_HOME` at a newer Node folder
-(used for the frontend process only).
+If your default Node is older than 22.22.3, copy `.env.example` to `.env.local` and set
+`NODE22_HOME` to a newer Node folder (gitignored, used for frontend processes only).
 
 Run them separately with `cd backend && ./mvnw spring-boot:run` and
 `cd frontend && npm start`.
@@ -32,6 +32,7 @@ Run them separately with `cd backend && ./mvnw spring-boot:run` and
 Tests:
 
 ```bash
+npm test            # backend + frontend
 npm run test:backend
 npm run test:frontend
 ```

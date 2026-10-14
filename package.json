@@ -4,7 +4,8 @@
   "description": "Developer shortcuts for the salary-management monorepo",
   "scripts": {
     "dev:local": "node scripts/dev-local.js",
+    "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "cd backend && node ../scripts/mvn.js verify",
-    "test:frontend": "cd frontend && npm test -- --watch=false"
+    "test:frontend": "node scripts/frontend.js test -- --watch=false"
   }
 }

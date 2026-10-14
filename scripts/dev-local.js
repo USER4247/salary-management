@@ -1,25 +1,16 @@
 // Starts the backend (Spring Boot) and the frontend (Angular dev server) together.
 //
-// Optional: set NODE22_HOME to a Node >= 22.22.3 folder if your default Node is older.
-// It is put first on the PATH for the frontend process only.
+// If your default Node is older than 22.22.3, set NODE22_HOME in a gitignored `.env.local`
+// (see `.env.example`); it is used for frontend processes only.
 const { spawn, spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
+const { root, frontendEnv } = require('./env');
+
 const isWin = process.platform === 'win32';
-const root = path.resolve(__dirname, '..');
 const backendDir = path.join(root, 'backend');
 const frontendDir = path.join(root, 'frontend');
-
-function frontendEnv() {
-  const env = { ...process.env };
-  const node22 = process.env.NODE22_HOME;
-  if (node22) {
-    const pathKey = Object.keys(env).find((k) => k.toLowerCase() === 'path') ?? 'PATH';
-    env[pathKey] = node22 + path.delimiter + env[pathKey];
-  }
-  return env;
-}
 
 // Prefix every output line with the process label, buffering partial lines between chunks.
 function forward(label, stream, out) {
