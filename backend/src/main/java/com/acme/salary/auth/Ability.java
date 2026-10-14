@@ -5,6 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * "What is this person allowed to do?", modelled like CASL (the same idea is used in the Angular app).
@@ -116,6 +120,24 @@ public final class Ability {
     /** "Can I do this to this specific item?" e.g. update the employee whose country is US. */
     public boolean can(Action action, Subject subject, Map<String, ?> resource) {
         return rules.stream().anyMatch(rule -> rule.covers(action, subject) && rule.conditionsHold(resource));
+    }
+
+    /**
+     * "Which countries is this person limited to for this action?" Empty means no limit (any country).
+     * This turns the ability into something a database query can use, so data is filtered at the source.
+     * Only the "country" condition is understood, which is the one COUNTRY_HR uses.
+     */
+    public Optional<Set<String>> countryLimit(Action action, Subject subject) {
+        List<Rule> matching = rules.stream().filter(rule -> rule.covers(action, subject)).toList();
+        if (matching.stream().anyMatch(rule -> rule.conditions().isEmpty())) {
+            return Optional.empty();   // one unconditional rule is enough: no limit
+        }
+        Set<String> countries = matching.stream()
+                .map(rule -> rule.conditions().get("country"))
+                .filter(Objects::nonNull)
+                .map(Object::toString)
+                .collect(Collectors.toSet());
+        return Optional.of(countries);   // may be empty: then nothing at all is allowed
     }
 
     public List<Rule> rules() {
