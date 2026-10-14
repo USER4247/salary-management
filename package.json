@@ -6,6 +6,7 @@
     "dev:local": "node scripts/dev-local.js",
     "dev:local:seed": "node scripts/dev-local.js --seed",
     "db:seed": "node scripts/run-node22.js scripts/seed-employees.js",
+    "db:reset": "node scripts/db-reset.js",
     "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "cd backend && node ../scripts/mvn.js verify",
     "test:frontend": "node scripts/frontend.js test -- --watch=false"
