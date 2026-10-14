@@ -18,18 +18,22 @@ how the organization pays people.
 Prerequisites: JDK 21+ and Node 22.22.3+ (no database server or Docker needed; SQLite is embedded).
 
 ```bash
-# backend: http://localhost:8080 (health: /actuator/health)
-cd backend && ./mvnw spring-boot:run
-
-# frontend: http://localhost:4200 (proxies /api to the backend)
-cd frontend && npm ci && npm start
+npm run dev:local
 ```
+
+This starts the backend (http://localhost:8080/actuator/health) and the frontend
+(http://localhost:4200, proxying `/api` to the backend) together; Ctrl+C stops both.
+If your default Node is older than 22.22.3, point `NODE22_HOME` at a newer Node folder
+(used for the frontend process only).
+
+Run them separately with `cd backend && ./mvnw spring-boot:run` and
+`cd frontend && npm start`.
 
 Tests:
 
 ```bash
-cd backend && ./mvnw verify
-cd frontend && npm test -- --watch=false
+npm run test:backend
+npm run test:frontend
 ```
 
 Configuration is read from environment variables (see [`.env.example`](.env.example) and
